@@ -148,12 +148,17 @@ function onCycleConfirm(): void {
 }
 
 // 帮助说明 Modal
+// 注意：onConfirm 不能内联引用 helpModalApi，否则与 helpModalApi 的类型推导形成循环（TS7022/TS7023）
+function closeHelpModal(): void {
+  helpModalApi.close();
+}
+
 const [HelpModal, helpModalApi] = useVbenModal({
   class: 'w-[600px]',
   title: '格式说明',
   showCancelButton: false,
   confirmText: '关闭',
-  onConfirm: () => helpModalApi.close(),
+  onConfirm: closeHelpModal,
 });
 
 // 点击输入框时弹窗

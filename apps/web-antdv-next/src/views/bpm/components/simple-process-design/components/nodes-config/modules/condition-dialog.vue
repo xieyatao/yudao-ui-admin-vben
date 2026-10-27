@@ -17,11 +17,14 @@ const emit = defineEmits<{
   updateCondition: [condition: object];
 }>();
 
-const conditionData = ref<{
+/** 条件弹窗的数据结构：打开时由父组件通过 setData 传入 */
+type ConditionData = {
   conditionExpression?: string;
   conditionGroups?: ConditionGroup;
   conditionType: ConditionType;
-}>({
+};
+
+const conditionData = ref<ConditionData>({
   conditionType: ConditionType.RULE,
   conditionGroups: cloneDeep(DEFAULT_CONDITION_GROUP_VALUE),
 });
@@ -29,7 +32,7 @@ const conditionData = ref<{
 // 条件组件的引用
 const conditionRef = ref();
 
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<ConditionData>({
   title: '条件配置',
   destroyOnClose: true,
   draggable: true,
@@ -65,7 +68,7 @@ const [Modal, modalApi] = useVbenModal({
 /**
  * 打开条件配置弹窗，不暴露 modalApi 给父组件
  */
-function openModal(conditionObj: any) {
+function openModal(conditionObj: ConditionData) {
   modalApi.setData(conditionObj).open();
 }
 

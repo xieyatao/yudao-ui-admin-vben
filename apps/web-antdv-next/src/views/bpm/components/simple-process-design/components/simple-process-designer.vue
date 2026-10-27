@@ -115,7 +115,7 @@ const processNodeTree = ref<SimpleFlowNode | undefined>();
 provide('processNodeTree', processNodeTree);
 
 // 创建错误提示弹窗
-const [ErrorModal, errorModalApi] = useVbenModal({
+const [ErrorModal, errorModalApi] = useVbenModal<SimpleFlowNode[]>({
   fullscreenButton: false,
 });
 
@@ -240,7 +240,7 @@ defineExpose({ validate });
       <div class="mb-2 text-base">以下节点配置不完善，请修改相关配置</div>
       <div
         class="mb-3 rounded-md p-2 text-sm"
-        v-for="(item, index) in errorModalApi.getData()"
+        v-for="(item, index) in errorModalApi.getData() || []"
         :key="index"
       >
         {{ item.name }} : {{ NODE_DEFAULT_TEXT.get(item.type) }}
