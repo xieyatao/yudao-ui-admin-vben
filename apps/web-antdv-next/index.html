@@ -15,8 +15,10 @@
     <title>%VITE_APP_TITLE%</title>
     <link rel="icon" href="/favicon.ico" />
     <script>
-      var HM_ID = '<%= VITE_APP_BAIDU_CODE %>';
-      if (HM_ID) {
+      // Vite 的 HTML 变量注入语法是 %VAR%（见上方 title），不是 <%= %>
+      var HM_ID = '%VITE_APP_BAIDU_CODE%';
+      // 变量未定义时 Vite 会原样保留占位符，一并挡掉，避免加载 hm.js?%VITE_...%
+      if (HM_ID && HM_ID.indexOf('%') === -1) {
         var _hmt = _hmt || [];
         (function () {
           var hm = document.createElement('script');
