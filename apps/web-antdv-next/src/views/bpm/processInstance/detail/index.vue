@@ -398,14 +398,22 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 
-  .ant-tabs-content {
+  .ant-tabs-body-holder {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .ant-tabs-body {
     height: 100%;
   }
-}
 
-:deep(.ant-tabs-tabpane) {
-  height: 100%;
-  overflow-y: auto;
+  // antdv-next 中每个面板的类名为 .ant-tabs-content（不再是 .ant-tabs-tabpane）
+  .ant-tabs-content {
+    height: 100%;
+    overflow-y: auto;
+  }
 }
 </style>
