@@ -12,6 +12,10 @@ export const overridesPreferences = defineOverridesPreferences({
     accessMode: 'backend',
     name: import.meta.env.VITE_APP_TITLE,
     enableRefreshToken: true,
+    preferencesButtonPosition: 'user-dropdown',
+  },
+  theme: {
+    mode: 'light',
   },
   footer: {
     /** 默认关闭 footer 页脚，因为有一定遮挡 */
@@ -19,10 +23,16 @@ export const overridesPreferences = defineOverridesPreferences({
     fixed: false,
   },
   copyright: {
-    companyName: import.meta.env.VITE_APP_TITLE,
-    companySiteLink: 'https://gitee.com/yudaocode/yudao-ui-admin-vben',
+    companyName: '达运科技',
+    companySiteLink: 'https://www.scdytech.com',
+    icp: '川ICP备51024350号',
   },
-  // copyright: appCopyrightPreferences,
+  widget: {
+    languageToggleButtonPosition: 'user-dropdown',
+    logoutButtonPosition: 'user-dropdown',
+    themeToggleButtonPosition: 'user-dropdown',
+    timezoneButtonPosition: 'user-dropdown',
+  },
 });
 
 // export const preferencesExtension =

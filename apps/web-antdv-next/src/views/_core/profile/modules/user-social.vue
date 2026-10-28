@@ -8,9 +8,10 @@ import { useRoute } from 'vue-router';
 import { confirm } from '@vben/common-ui';
 import { DICT_TYPE, SystemUserSocialTypeEnum } from '@vben/constants';
 import { getDictLabel } from '@vben/hooks';
+import { IconifyIcon } from '@vben/icons';
 import { getUrlValue } from '@vben/utils';
 
-import { Button, Card, Image, message } from 'antdv-next';
+import { Button, Card, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { socialAuthRedirect } from '#/api/core/auth';
@@ -165,12 +166,10 @@ onMounted(() => {
       >
         <Card v-for="item in allBindList" :key="item.type" class="!mb-2">
           <div class="flex w-full items-center gap-4">
-            <Image
-              :src="item.img"
-              :width="40"
-              :height="40"
-              :alt="item.title"
-              :preview="false"
+            <IconifyIcon
+              :icon="item.icon"
+              :title="item.title"
+              class="size-10 shrink-0"
             />
             <div class="flex flex-1 items-center justify-between">
               <div class="flex flex-col">

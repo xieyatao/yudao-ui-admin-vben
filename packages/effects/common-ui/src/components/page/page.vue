@@ -27,10 +27,6 @@ const contentStyle = computed<StyleValue>(() => {
     marginBlockEnd: 'var(--page-content-height-offset)',
   };
 });
-
-function isDocAlertEnable(): boolean {
-  return import.meta.env.VITE_APP_DOCALERT_ENABLE !== 'false';
-}
 </script>
 
 <template>
@@ -42,19 +38,6 @@ function isDocAlertEnable(): boolean {
       )
     "
   >
-    <div
-      v-if="$slots.doc && isDocAlertEnable()"
-      :class="
-        cn(
-          'bg-card border-border relative mx-4 flex items-start rounded-md border-b',
-        )
-      "
-    >
-      <div class="flex-auto">
-        <slot name="doc"></slot>
-      </div>
-    </div>
-
     <div
       v-if="
         description ||

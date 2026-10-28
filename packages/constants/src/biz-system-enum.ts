@@ -48,13 +48,13 @@ export const SystemUserSocialTypeEnum = {
     title: '钉钉',
     type: 20,
     source: 'dingtalk',
-    img: 'https://s1.ax1x.com/2022/05/22/OzMDRs.png',
+    icon: 'svg:dingding', // 与登录页第三方登录使用同一套本地 SVG 图标
   },
   WECHAT_ENTERPRISE: {
     title: '企业微信',
     type: 30,
     source: 'wechat_enterprise',
-    img: 'https://s1.ax1x.com/2022/05/22/OzMrzn.png',
+    icon: 'svg:wechat', // 与登录页第三方登录使用同一套本地 SVG 图标
   },
 };
 
