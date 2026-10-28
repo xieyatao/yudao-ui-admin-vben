@@ -15,7 +15,6 @@ const emit = defineEmits(['success']);
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     formItemClass: 'col-span-2',
-    labelWidth: 120,
   },
   layout: 'horizontal',
   schema: useImportFormSchema(),

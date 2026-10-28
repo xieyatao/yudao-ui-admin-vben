@@ -76,9 +76,17 @@ function useVbenForm<
     TSubmitValues
   >,
 ) {
-  return useForm<TFormValues, ComponentType, ComponentPropsMap, TSubmitValues>(
-    options,
-  );
+  // 全局默认：标签宽度按当前表单可见 label 的最宽值自动对齐。
+  // 固定像素（此前多为 80）会挤不下 4 字以上的中文标签而按字换行；
+  // 页面确需固定宽度时，显式传 commonConfig.labelWidth 覆盖即可。
+  const commonConfig = options.commonConfig ?? {};
+  return useForm<TFormValues, ComponentType, ComponentPropsMap, TSubmitValues>({
+    ...options,
+    commonConfig: {
+      ...commonConfig,
+      labelWidth: commonConfig.labelWidth ?? 'auto',
+    },
+  });
 }
 
 export { initSetupVbenForm, useVbenForm, z };

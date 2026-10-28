@@ -22,9 +22,7 @@ const emit = defineEmits<{
 }>();
 
 const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    labelWidth: 70,
-  },
+  commonConfig: {},
   schema: [
     {
       label: '用户昵称',
