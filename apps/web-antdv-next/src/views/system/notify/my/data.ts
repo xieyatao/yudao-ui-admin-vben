@@ -68,6 +68,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       field: 'templateContent',
       title: '消息内容',
       minWidth: 300,
+      slots: { default: 'content' },
     },
     {
       field: 'readStatus',

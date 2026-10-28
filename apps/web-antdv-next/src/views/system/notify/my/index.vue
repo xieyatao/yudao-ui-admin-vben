@@ -191,15 +191,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
               icon: ACTION_ICON.ADD,
               onClick: handleRead.bind(null, row),
             },
-            {
-              label: '去处理',
-              type: 'link',
-              ifShow: Boolean(row.url),
-              icon: ACTION_ICON.AUDIT,
-              onClick: handleNavigate.bind(null, row),
-            },
           ]"
         />
+      </template>
+      <template #content="{ row }">
+        <!-- 带跳转链接的消息：内容即可点击，点击后标记已读并跳转业务详情 -->
+        <a
+          v-if="row.url"
+          class="text-primary hover:underline"
+          @click="handleNavigate(row)"
+        >
+          {{ row.templateContent }}
+        </a>
+        <span v-else>{{ row.templateContent }}</span>
       </template>
     </Grid>
   </Page>
