@@ -10,6 +10,8 @@ export namespace SystemNotifyTemplateApi {
     nickname: string;
     code: string;
     content: string;
+    /** 跳转链接模板，支持 {xxx} 占位符 */
+    url?: string;
     type?: number;
     params: string[];
     status: number;

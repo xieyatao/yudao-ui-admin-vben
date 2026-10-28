@@ -1,5 +1,6 @@
 import type { Recordable } from '@vben/types';
 
+export * from './notificationNavigate';
 export * from './rangePickerProps';
 export * from './routerHelper';
 

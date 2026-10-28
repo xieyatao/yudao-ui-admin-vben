@@ -15,6 +15,7 @@ import {
   updateAllNotifyMessageRead,
   updateNotifyMessageRead,
 } from '#/api/system/notify/message';
+import { navigateByNotificationLink } from '#/utils';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Detail from './modules/detail.vue';
@@ -49,6 +50,16 @@ async function handleRead(row: SystemNotifyMessageApi.NotifyMessage) {
   } finally {
     hideLoading();
   }
+}
+
+/** 跳转业务详情（如 BPM 流程实例），并顺带标记已读 */
+async function handleNavigate(row: SystemNotifyMessageApi.NotifyMessage) {
+  if (!row.url) {
+    return;
+  }
+  await updateNotifyMessageRead([row.id]);
+  await navigateByNotificationLink(row.url);
+  handleRefresh();
 }
 
 /** 标记选中的站内信为已读 */
@@ -179,6 +190,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
               ifShow: !row.readStatus,
               icon: ACTION_ICON.ADD,
               onClick: handleRead.bind(null, row),
+            },
+            {
+              label: '去处理',
+              type: 'link',
+              ifShow: Boolean(row.url),
+              icon: ACTION_ICON.AUDIT,
+              onClick: handleNavigate.bind(null, row),
             },
           ]"
         />

@@ -56,6 +56,15 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
+      fieldName: 'url',
+      label: '跳转链接',
+      component: 'Input',
+      componentProps: {
+        placeholder:
+          '选填，支持 {xxx} 占位符；/ 开头为内部路由，http(s):// 为外部链接',
+      },
+    },
+    {
       fieldName: 'type',
       label: '模板类型',
       component: 'Select',
@@ -247,6 +256,11 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     {
       field: 'content',
       title: '模板内容',
+      minWidth: 200,
+    },
+    {
+      field: 'url',
+      title: '跳转链接',
       minWidth: 200,
     },
     {

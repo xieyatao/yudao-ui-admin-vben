@@ -133,5 +133,10 @@ export function useDetailSchema(): DescriptionItemSchema[] {
       field: 'templateContent',
       label: '消息内容',
     },
+    {
+      field: 'url',
+      label: '跳转链接',
+      render: (val) => val || '-',
+    },
   ];
 }

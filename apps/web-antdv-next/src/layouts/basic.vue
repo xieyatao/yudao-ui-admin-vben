@@ -32,6 +32,7 @@ import { getSimpleTenantList } from '#/api/system/tenant';
 import { $t } from '#/locales';
 import { router } from '#/router';
 import { useAuthStore } from '#/store';
+import { navigateByNotificationLink } from '#/utils';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
 const userStore = useUserStore();
@@ -78,6 +79,7 @@ async function handleNotificationGetList() {
     date: formatDateTime(item.createTime) as string,
     isRead: false,
     id: item.id,
+    link: item.url,
     message: item.templateContent,
     title: item.templateNickname,
   }));
@@ -168,29 +170,9 @@ onMounted(() => {
 });
 
 const handleClick = (item: NotificationItem) => {
-  // 如果通知项有链接，点击时跳转
-  if (item.link) {
-    navigateTo(item.link, item.query, item.state);
-  }
+  // 如果通知项有链接，点击时跳转（内部路由 / 外部链接，见 navigateByNotificationLink）
+  navigateByNotificationLink(item.link);
 };
-
-function navigateTo(
-  link: string,
-  query?: Record<string, any>,
-  state?: Record<string, any>,
-) {
-  if (link.startsWith('http://') || link.startsWith('https://')) {
-    // 外部链接，在新标签页打开
-    window.open(link, '_blank');
-  } else {
-    // 内部路由链接，支持 query 参数和 state
-    router.push({
-      path: link,
-      query: query || {},
-      state,
-    });
-  }
-}
 
 watch(
   () => ({

@@ -12,6 +12,8 @@ export namespace SystemNotifyMessageApi {
     templateCode: string;
     templateNickname: string;
     templateContent: string;
+    /** 跳转链接（渲染后），为空表示无跳转 */
+    url: string;
     templateType: number;
     templateParams: string;
     readStatus: boolean;
