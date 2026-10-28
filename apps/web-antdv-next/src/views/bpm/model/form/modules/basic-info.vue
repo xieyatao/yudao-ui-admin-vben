@@ -427,9 +427,8 @@ defineExpose({ validate });
       </FormItem>
     </Form>
 
-    <!-- 用户选择弹窗 -->
+    <!-- 用户选择弹窗（宽度由组件自身定义，调用处不要覆盖） -->
     <UserSelectModalComp
-      class="w-3/5"
       v-model:value="selectedUsers"
       :multiple="true"
       @confirm="handleUserSelectConfirm"

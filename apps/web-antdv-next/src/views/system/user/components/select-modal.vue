@@ -401,7 +401,7 @@ function processDeptNode(node: any): DeptTreeNode {
 </script>
 
 <template>
-  <Modal class="w-2/5" key="user-select-modal" :title="title">
+  <Modal class="w-[920px] max-w-[95vw]" key="user-select-modal" :title="title">
     <Row :gutter="[16, 16]">
       <Col :span="6">
         <div class="h-[500px] overflow-auto rounded border">
@@ -483,6 +483,12 @@ function processDeptNode(node: any): DeptTreeNode {
 </template>
 
 <style lang="scss" scoped>
+/* antdv-next(1.x) 把 Transfer 的语义类名改过一轮：
+   列表容器 .ant-transfer-list -> .ant-transfer-section，
+   中间操作区 .ant-transfer-operation -> .ant-transfer-actions。
+   旧选择器在此版本下全部失配，列表会退回默认 180px 宽、高度塌陷，
+   表现为两个窄列表中间大片空白、分页被挤成竖排。新旧类名都保留，
+   以便后续 antdv 版本再变时仍能命中。 */
 :deep(.ant-transfer) {
   display: flex;
   align-items: center;
@@ -490,11 +496,13 @@ function processDeptNode(node: any): DeptTreeNode {
   height: 500px;
 }
 
-:deep(.ant-transfer-list) {
+:deep(.ant-transfer-list),
+:deep(.ant-transfer-section) {
   display: flex;
   flex: 1;
   flex-direction: column;
   width: 300px !important;
+  min-width: 0;
   height: 100%;
 }
 
@@ -502,8 +510,14 @@ function processDeptNode(node: any): DeptTreeNode {
   flex-shrink: 0;
 }
 
+/* 搜索框外层在新版叫 body-search-wrapper，输入框本身才是 list-search，
+   内边距放在外层，避免撑开输入框 */
+:deep(.ant-transfer-list-body-search-wrapper),
 :deep(.ant-transfer-list-search) {
   flex-shrink: 0;
+}
+
+:deep(.ant-transfer-list-body-search-wrapper) {
   padding: 8px;
 }
 
@@ -520,7 +534,9 @@ function processDeptNode(node: any): DeptTreeNode {
   padding: 6px 12px;
 }
 
-:deep(.ant-transfer-operation) {
+:deep(.ant-transfer-operation),
+:deep(.ant-transfer-actions) {
+  flex-shrink: 0;
   padding: 0 8px;
 }
 
@@ -532,6 +548,9 @@ function processDeptNode(node: any): DeptTreeNode {
   margin: 8px;
   font-size: 12px;
   text-align: right;
+
+  /* 列表宽度有限，「共 N 条」与页码器同处一行，禁止折行避免文字竖排 */
+  white-space: nowrap;
 }
 
 :deep(.ant-pagination-options) {
