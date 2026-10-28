@@ -345,7 +345,7 @@ export function useGridColumns(
     },
     {
       title: '操作',
-      width: 180,
+      width: 200,
       fixed: 'right',
       slots: { default: 'actions' },
     },

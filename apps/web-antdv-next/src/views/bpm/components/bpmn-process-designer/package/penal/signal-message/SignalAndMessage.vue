@@ -183,7 +183,7 @@ const [MessageGrid, messageGridApi] = useVbenVxeGrid({
       { field: 'name', title: '消息名称', minWidth: 100 },
       {
         title: '操作',
-        width: 120,
+        width: 140,
         slots: { default: 'action' },
         fixed: 'right',
       },
@@ -208,7 +208,7 @@ const [SignalGrid, signalGridApi] = useVbenVxeGrid({
       { field: 'name', title: '信号名称', minWidth: 100 },
       {
         title: '操作',
-        width: 120,
+        width: 140,
         slots: { default: 'action' },
         fixed: 'right',
       },

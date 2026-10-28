@@ -198,7 +198,7 @@ const gridOptions = {
     { title: '目标', field: 'target', minWidth: 100 },
     {
       title: '操作',
-      width: 130,
+      width: 140,
       slots: { default: 'action' },
       fixed: 'right' as const,
     },

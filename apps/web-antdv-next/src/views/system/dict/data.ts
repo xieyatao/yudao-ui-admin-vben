@@ -140,7 +140,7 @@ export function useTypeGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       title: '操作',
-      minWidth: 120,
+      minWidth: 140,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -344,7 +344,7 @@ export function useDataGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       title: '操作',
-      minWidth: 120,
+      minWidth: 140,
       fixed: 'right',
       slots: { default: 'actions' },
     },

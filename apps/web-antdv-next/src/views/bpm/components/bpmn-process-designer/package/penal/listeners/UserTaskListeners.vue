@@ -174,7 +174,7 @@ const [ListenerGrid, listenerGridApi] = useVbenVxeGrid({
       },
       {
         title: '操作',
-        width: 120,
+        width: 140,
         slots: { default: 'action' },
         fixed: 'right',
       },
@@ -270,7 +270,7 @@ const [FieldsGrid, fieldsGridApi] = useVbenVxeGrid({
       },
       {
         title: '操作',
-        width: 120,
+        width: 140,
         slots: { default: 'action' },
         fixed: 'right',
       },
