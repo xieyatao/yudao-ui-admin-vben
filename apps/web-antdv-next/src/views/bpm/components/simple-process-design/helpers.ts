@@ -231,27 +231,26 @@ export function useNodeForm(nodeType: BpmNodeTypeEnum) {
   const formFields = inject<Ref<string[]>>('formFields', ref([])); // 流程表单字段
   const configForm = ref<any | CopyTaskFormType | UserTaskFormType>();
 
-  if (
+  const isUserTask =
     nodeType === BpmNodeTypeEnum.USER_TASK_NODE ||
-    nodeType === BpmNodeTypeEnum.TRANSACTOR_NODE
-  ) {
-    configForm.value = {
-      candidateStrategy: CandidateStrategy.USER,
-      approveMethod: ApproveMethodType.SEQUENTIAL_APPROVE,
-      approveRatio: 100,
-      rejectHandlerType: RejectHandlerType.FINISH_PROCESS,
-      assignStartUserHandlerType: AssignStartUserHandlerType.START_USER_AUDIT,
-      returnNodeId: '',
-      timeoutHandlerEnable: false,
-      timeoutHandlerType: 1,
-      timeDuration: 6, // 默认 6小时
-      maxRemindCount: 1, // 默认 提醒 1次
-      buttonsSetting: [],
-    };
-  }
-  configForm.value = {
-    candidateStrategy: CandidateStrategy.USER,
-  };
+    nodeType === BpmNodeTypeEnum.TRANSACTOR_NODE;
+  configForm.value = isUserTask
+    ? {
+        candidateStrategy: CandidateStrategy.USER,
+        approveMethod: ApproveMethodType.SEQUENTIAL_APPROVE,
+        approveRatio: 100,
+        rejectHandlerType: RejectHandlerType.FINISH_PROCESS,
+        assignStartUserHandlerType: AssignStartUserHandlerType.START_USER_AUDIT,
+        returnNodeId: '',
+        timeoutHandlerEnable: false,
+        timeoutHandlerType: 1,
+        timeDuration: 6, // 默认 6小时
+        maxRemindCount: 1, // 默认 提醒 1次
+        buttonsSetting: [],
+      }
+    : {
+        candidateStrategy: CandidateStrategy.USER,
+      };
 
   function getShowText(): string {
     let showText = '';

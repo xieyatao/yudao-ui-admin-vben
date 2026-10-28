@@ -7,7 +7,7 @@ import { useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 import { cloneDeep } from '@vben/utils';
 
-import { Input } from 'antdv-next';
+import { Input, message } from 'antdv-next';
 
 import { ConditionType } from '../../consts';
 import {
@@ -60,8 +60,11 @@ const fieldOptions = useFormFieldsAndStartUser(); // 流程表单字段和发起
 async function saveConfig() {
   if (!currentNode.value.conditionSetting?.defaultFlow) {
     // 校验表单
-    const valid = await conditionRef.value.validate();
-    if (!valid) return false;
+    const valid = await conditionRef.value.validate().catch(() => false);
+    if (!valid) {
+      message.warning('请完善条件配置');
+      return false;
+    }
     const showText = getConditionShowText(
       condition.value?.conditionType,
       condition.value?.conditionExpression,
@@ -69,6 +72,7 @@ async function saveConfig() {
       fieldOptions,
     );
     if (!showText) {
+      message.warning('请完善条件配置');
       return false;
     }
     currentNode.value.showText = showText;

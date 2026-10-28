@@ -67,11 +67,17 @@ async function validateConfig() {
       valid = false;
     }
   }
-  if (!valid) return false;
+  if (!valid) {
+    message.warning('请完善路由条件配置');
+    return false;
+  }
 
   // 获取节点显示文本，如果为空，校验不通过
   const showText = getShowText();
-  if (!showText) return false;
+  if (!showText) {
+    message.warning('请配置路由分支');
+    return false;
+  }
 
   return true;
 }

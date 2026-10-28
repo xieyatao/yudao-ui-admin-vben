@@ -101,6 +101,8 @@ const configForm = ref<TriggerSetting>({
     },
   ],
 });
+// 保存初始默认配置：每次打开抽屉前重置，避免节点组件实例复用时残留上一个节点的配置
+const defaultConfigForm = cloneDeep(configForm.value);
 // 流程表单字段
 const formFields = useFormFields();
 
@@ -270,11 +272,20 @@ function deleteFormFieldSetting(formSetting: FormTriggerSetting, key: string) {
 
 /** 保存配置 */
 async function saveConfig() {
-  if (!formRef.value) return false;
-  const valid = await formRef.value.validate();
-  if (!valid) return false;
+  if (!formRef.value) {
+    message.error('表单尚未初始化，请稍后重试');
+    return false;
+  }
+  const valid = await formRef.value.validate().catch(() => false);
+  if (!valid) {
+    message.warning('请完善触发器配置');
+    return false;
+  }
   const showText = getShowText();
-  if (!showText) return false;
+  if (!showText) {
+    message.warning('请完善触发器配置');
+    return false;
+  }
   currentNode.value.name = nodeName.value!;
   currentNode.value.showText = showText;
   switch (configForm.value.type) {
@@ -350,6 +361,8 @@ function getShowText(): string {
 
 /** 显示触发器节点配置，由父组件传过来 */
 function showTriggerNodeConfig(node: SimpleFlowNode) {
+  // 重置为默认值，避免复用组件实例时带上上一个节点的配置
+  configForm.value = cloneDeep(defaultConfigForm);
   nodeName.value = node.name;
   originalSetting = node.triggerSetting
     ? cloneDeep(node.triggerSetting)

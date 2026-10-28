@@ -9,12 +9,14 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { BpmModelFormType, BpmNodeTypeEnum } from '@vben/constants';
 import { IconifyIcon } from '@vben/icons';
+import { cloneDeep } from '@vben/utils';
 
 import {
   Col,
   Form,
   FormItem,
   Input,
+  message,
   Radio,
   RadioGroup,
   Row,
@@ -138,6 +140,8 @@ const {
 } = useNodeForm(BpmNodeTypeEnum.COPY_TASK_NODE);
 
 const configForm = tempConfigForm as Ref<CopyTaskFormType>;
+// 保存初始默认配置：每次打开抽屉前重置，避免节点组件实例复用时残留上一个节点的配置
+const defaultConfigForm = cloneDeep(configForm.value);
 // 抄送人策略，去掉发起人自选 和 发起人自己
 const copyUserStrategies = computed(() => {
   return CANDIDATE_STRATEGY.filter(
@@ -160,11 +164,20 @@ function changeCandidateStrategy() {
 // 保存配置
 async function saveConfig() {
   activeTabName.value = 'user';
-  if (!formRef.value) return false;
-  const valid = await formRef.value.validate();
-  if (!valid) return false;
+  if (!formRef.value) {
+    message.error('表单尚未初始化，请稍后重试');
+    return false;
+  }
+  const valid = await formRef.value.validate().catch(() => false);
+  if (!valid) {
+    message.warning('请完善抄送人配置');
+    return false;
+  }
   const showText = getShowText();
-  if (!showText) return false;
+  if (!showText) {
+    message.warning('请选择具体的抄送人');
+    return false;
+  }
   currentNode.value.name = nodeName.value!;
   currentNode.value.candidateParam = handleCandidateParam();
   currentNode.value.candidateStrategy = configForm.value.candidateStrategy;
@@ -176,6 +189,10 @@ async function saveConfig() {
 
 // 显示抄送节点配置， 由父组件传过来
 function showCopyTaskNodeConfig(node: SimpleFlowNode) {
+  // 重置为默认值，避免复用组件实例时带上上一个节点的配置
+  configForm.value = cloneDeep(defaultConfigForm);
+  // 每次打开都回到「抄送人」Tab
+  activeTabName.value = 'user';
   nodeName.value = node.name;
   // 抄送人设置
   configForm.value.candidateStrategy = node.candidateStrategy!;

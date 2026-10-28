@@ -23,6 +23,7 @@ import {
   FormItem,
   Input,
   InputNumber,
+  message,
   Radio,
   RadioButton,
   RadioGroup,
@@ -231,6 +232,8 @@ const {
   getShowText,
 } = useNodeForm(currentNode.value.type);
 const configForm = tempConfigForm as Ref<UserTaskFormType>;
+// 保存初始默认配置：每次打开抽屉前重置，避免节点组件实例复用时残留上一个节点的配置
+const defaultConfigForm = cloneDeep(configForm.value);
 
 // 改变审批人设置策略
 function changeCandidateStrategy() {
@@ -286,27 +289,36 @@ const nodeTypeName = computed(() => {
 
 /** 校验节点配置 */
 async function validateConfig() {
-  if (!formRef.value) return false;
-  if (!userTaskListenerRef.value) return false;
+  if (!formRef.value) {
+    message.error('表单尚未初始化，请稍后重试');
+    return false;
+  }
 
   // 先进行表单验证，记录验证结果
   const userFormValid = await formRef.value.validate().catch(() => false);
-  const listenerValid = await userTaskListenerRef.value.validate().catch(() => {
-    return false;
-  });
+  // 监听器 Tab 未渲染过时 ref 不存在，说明用户没有配置监听器，跳过校验即可
+  const listenerValid = userTaskListenerRef.value
+    ? await userTaskListenerRef.value.validate().catch(() => false)
+    : true;
   // 如果监听器有错误，切换到监听器Tab
   if (!listenerValid) {
     activeTabName.value = 'listener';
+    message.warning('请检查监听器配置');
     return false;
   }
   // 如果审批人表单有错误，切换到审批人Tab
   if (!userFormValid) {
     activeTabName.value = 'user';
+    message.warning('请完善审批人配置');
     return false;
   }
 
   const showText = getShowText();
-  if (!showText) return false;
+  if (!showText) {
+    activeTabName.value = 'user';
+    message.warning('请选择具体的审批人');
+    return false;
+  }
 
   return true;
 }
@@ -400,6 +412,11 @@ async function saveConfig() {
 
 /** 显示审批节点配置， 由父组件传过来 */
 function showUserTaskNodeConfig(node: SimpleFlowNode) {
+  // 重置为默认值，避免复用组件实例时带上上一个节点的配置
+  configForm.value = cloneDeep(defaultConfigForm);
+  // 重置 Tab 和按钮编辑状态，保证每次打开都回到「审批人」Tab
+  activeTabName.value = 'user';
+  btnDisplayNameEdit.value = [];
   nodeName.value = node.name;
   // 1 审批类型
   approveType.value =
@@ -410,7 +427,7 @@ function showUserTaskNodeConfig(node: SimpleFlowNode) {
     return;
   }
 
-  // 2.1 审批人设置
+  // 2.1 审批人设置（新节点没有该字段，保持未选中，必须由用户手动选择）
   configForm.value.candidateStrategy = node.candidateStrategy!;
   // 解析候选人参数
   parseCandidateParam(node.candidateStrategy!, node?.candidateParam);
@@ -441,12 +458,13 @@ function showUserTaskNodeConfig(node: SimpleFlowNode) {
   configForm.value.assignEmptyHandlerUserIds = node.assignEmptyHandler?.userIds;
   // 2.6 设置用户任务的审批人与发起人相同时
   configForm.value.assignStartUserHandlerType = node.assignStartUserHandlerType;
-  // 3. 操作按钮设置
-  buttonsSetting.value =
-    cloneDeep(node.buttonsSetting) ||
-    (node.type === BpmNodeTypeEnum.TRANSACTOR_NODE
-      ? TRANSACTOR_DEFAULT_BUTTON_SETTING
-      : DEFAULT_BUTTON_SETTING);
+  // 3. 操作按钮设置（默认值必须深拷贝，否则会修改共享的默认常量，导致新节点继承上一个节点的开关状态）
+  buttonsSetting.value = cloneDeep(
+    node.buttonsSetting ??
+      (node.type === BpmNodeTypeEnum.TRANSACTOR_NODE
+        ? TRANSACTOR_DEFAULT_BUTTON_SETTING
+        : DEFAULT_BUTTON_SETTING),
+  );
   // 4. 表单字段权限配置
   getNodeConfigFormFields(node.fieldsPermission);
   // 5. 监听器

@@ -11,6 +11,7 @@ import { inject, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { BpmModelFormType, BpmNodeTypeEnum } from '@vben/constants';
 import { IconifyIcon } from '@vben/icons';
+import { cloneDeep } from '@vben/utils';
 
 import {
   Col,
@@ -112,14 +113,16 @@ async function saveConfig() {
   currentNode.value.showText = '已设置';
   // 设置表单权限
   currentNode.value.fieldsPermission = fieldsPermissionConfig.value;
-  // 设置发起人的按钮权限
-  currentNode.value.buttonsSetting = START_USER_BUTTON_SETTING;
+  // 设置发起人的按钮权限（深拷贝，避免节点与默认常量共享引用）
+  currentNode.value.buttonsSetting = cloneDeep(START_USER_BUTTON_SETTING);
   drawerApi.setState({ isOpen: false });
   return true;
 }
 
 // 显示发起人节点配置，由父组件传过来
 function showStartUserNodeConfig(node: SimpleFlowNode) {
+  // 每次打开都回到「权限」Tab
+  activeTabName.value = 'user';
   nodeName.value = node.name;
   // 表单字段权限
   getNodeConfigFormFields(node.fieldsPermission);

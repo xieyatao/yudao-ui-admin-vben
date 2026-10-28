@@ -44,7 +44,6 @@ function openNodeConfig() {
     return;
   }
   nodeSetting.value.showCopyTaskNodeConfig(currentNode.value);
-  nodeSetting.value.openDrawer();
 }
 
 // 删除节点。更新当前节点为孩子节点

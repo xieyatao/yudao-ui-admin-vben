@@ -6,6 +6,7 @@ import { reactive, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { BpmNodeTypeEnum } from '@vben/constants';
 import { IconifyIcon } from '@vben/icons';
+import { cloneDeep } from '@vben/utils';
 
 import {
   Col,
@@ -14,6 +15,7 @@ import {
   FormItem,
   Input,
   InputNumber,
+  message,
   Radio,
   RadioGroup,
   Row,
@@ -72,6 +74,8 @@ const configForm = ref({
   timeUnit: TimeUnitType.HOUR,
   dateTime: '',
 });
+// 保存初始默认配置：每次打开抽屉前重置，避免节点组件实例复用时残留上一个节点的配置
+const defaultConfigForm = cloneDeep(configForm.value);
 
 // 获取显示文本
 function getShowText(): string {
@@ -102,11 +106,20 @@ function getIsoTimeDuration() {
 
 // 保存配置
 async function saveConfig() {
-  if (!formRef.value) return false;
-  const valid = await formRef.value.validate();
-  if (!valid) return false;
+  if (!formRef.value) {
+    message.error('表单尚未初始化，请稍后重试');
+    return false;
+  }
+  const valid = await formRef.value.validate().catch(() => false);
+  if (!valid) {
+    message.warning('请完善延迟器配置');
+    return false;
+  }
   const showText = getShowText();
-  if (!showText) return false;
+  if (!showText) {
+    message.warning('请设置延迟时间');
+    return false;
+  }
   currentNode.value.name = nodeName.value!;
   currentNode.value.showText = showText;
   if (configForm.value.delayType === DelayTypeEnum.FIXED_TIME_DURATION) {
@@ -132,6 +145,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 // 显示延迟器节点配置，由父组件调用
 function openDrawer(node: SimpleFlowNode) {
+  // 重置为默认值，避免复用组件实例时带上上一个节点的配置
+  configForm.value = cloneDeep(defaultConfigForm);
   nodeName.value = node.name;
   if (node.delaySetting) {
     configForm.value.delayType = node.delaySetting.delayType;

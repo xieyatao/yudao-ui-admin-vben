@@ -6,6 +6,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { BpmNodeTypeEnum } from '@vben/constants';
 import { IconifyIcon } from '@vben/icons';
+import { cloneDeep } from '@vben/utils';
 
 import {
   Button,
@@ -16,6 +17,7 @@ import {
   FormItem,
   Input,
   InputNumber,
+  message,
   Radio,
   RadioButton,
   RadioGroup,
@@ -168,6 +170,8 @@ const configForm = ref<ChildProcessFormType>({
     ChildProcessMultiInstanceSourceTypeEnum.FIXED_QUANTITY,
   multiInstanceSource: '',
 });
+// 保存初始默认配置：每次打开抽屉前重置，避免节点组件实例复用时残留上一个节点的配置
+const defaultConfigForm = cloneDeep(configForm.value);
 
 const childProcessOptions = ref<any[]>([]);
 // 主流程表单字段选项
@@ -197,9 +201,15 @@ const childFormFieldOptions = ref<any[]>([]);
 /** 保存配置 */
 const saveConfig = async () => {
   activeTabName.value = 'child';
-  if (!formRef.value) return false;
+  if (!formRef.value) {
+    message.error('表单尚未初始化，请稍后重试');
+    return false;
+  }
   const valid = await formRef.value.validate().catch(() => false);
-  if (!valid) return false;
+  if (!valid) {
+    message.warning('请完善子流程配置');
+    return false;
+  }
 
   const childInfo = childProcessOptions.value.find(
     (option) => option.key === configForm.value.calledProcessDefinitionKey,
@@ -269,6 +279,10 @@ const saveConfig = async () => {
 
 // 显示子流程节点配置， 由父组件传过来
 const showChildProcessNodeConfig = (node: SimpleFlowNode) => {
+  // 重置为默认值，避免复用组件实例时带上上一个节点的配置
+  configForm.value = cloneDeep(defaultConfigForm);
+  // 每次打开都回到「子流程」Tab
+  activeTabName.value = 'child';
   nodeName.value = node.name;
   if (node.childProcessSetting) {
     // 1. 是否异步
