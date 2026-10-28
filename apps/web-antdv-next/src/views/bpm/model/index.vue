@@ -1,7 +1,14 @@
 <script lang="ts" setup>
 import type { ModelCategoryInfo } from '#/api/bpm/model';
 
-import { onActivated, reactive, ref, useTemplateRef, watch } from 'vue';
+import {
+  onActivated,
+  onMounted,
+  reactive,
+  ref,
+  useTemplateRef,
+  watch,
+} from 'vue';
 
 import { useAccess } from '@vben/access';
 import { Page, useVbenModal } from '@vben/common-ui';
@@ -73,8 +80,15 @@ watch(
   },
 );
 
+let loadingData = false; // 防止 onMounted 与首次 onActivated 并发重复请求
+
 /** 加载数据 */
 async function getList() {
+  // 首次打开时 onMounted 与 onActivated 可能都会触发，这里做并发去重
+  if (loadingData) {
+    return;
+  }
+  loadingData = true;
   modelListSpinning.value = true;
   try {
     const modelList = await getModelList(queryParams.name);
@@ -90,10 +104,16 @@ async function getList() {
     sortableInstance.value = null;
   } finally {
     modelListSpinning.value = false;
+    loadingData = false;
   }
 }
 
-/** 初始化 */
+/** 初始化：首次挂载时加载数据（KeepAlive 的 include 异步就绪，首次挂载可能不会触发 onActivated） */
+onMounted(() => {
+  getList();
+});
+
+/** 从其他标签页切回时刷新数据 */
 onActivated(() => {
   getList();
 });
