@@ -12,12 +12,20 @@ export namespace BpmOALeaveApi {
     startTime: number;
     endTime: number;
     createTime: Date;
+    resultReason?: string;
   }
 }
 
 /** 创建请假申请 */
 export async function createLeave(data: BpmOALeaveApi.Leave) {
   return requestClient.post('/bpm/oa/leave/create', data);
+}
+
+/** 取消请假申请 */
+export async function cancelLeave(id: number, reason: string) {
+  return requestClient.delete<boolean>('/bpm/oa/leave/cancel', {
+    params: { id, reason },
+  });
 }
 
 /** 获得请假申请 */

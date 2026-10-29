@@ -2,7 +2,7 @@
 import type { BpmOALeaveApi } from '#/api/bpm/oa/leave';
 import type { BpmProcessInstanceApi } from '#/api/bpm/processInstance';
 
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { confirm, Page, useVbenForm } from '@vben/common-ui';
@@ -39,12 +39,14 @@ const tempStartUserSelectAssignees = ref<Record<string, number[]>>({}); // 历�
 const activityNodes = ref<BpmProcessInstanceApi.ApprovalNodeInfo[]>([]); // 审批节点信息
 const processDefinitionId = ref('');
 
-const formData = ref<BpmOALeaveApi.Leave>();
+const formData = ref<Partial<BpmOALeaveApi.Leave>>({});
 const getTitle = computed(() => {
   return formData.value?.id
     ? '重新发起请假'
     : $t('ui.actionTitle.create', ['请假']);
 });
+
+let predictionRequestId = 0;
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -56,6 +58,15 @@ const [Form, formApi] = useVbenForm({
   layout: 'horizontal',
   schema: useFormSchema(),
   showDefaultActions: false,
+  handleValuesChange: () => {
+    if (!processDefinitionId.value) {
+      return;
+    }
+    // 重新预测前先暂存已选审批人，预测完成后按节点恢复
+    tempStartUserSelectAssignees.value = { ...startUserSelectAssignees.value };
+    startUserSelectAssignees.value = {};
+    getApprovalDetail();
+  },
 });
 
 /** 提交申请 */
@@ -117,19 +128,25 @@ function onBack() {
 
 /** 审批相关：获取审批详情 */
 async function getApprovalDetail() {
+  if (!processDefinitionId.value) {
+    return;
+  }
+  const requestId = ++predictionRequestId;
   processTimeLineLoading.value = true;
   try {
+    const values = await formApi.getValues();
+    const startTime = values.startTime ? dayjs(Number(values.startTime)) : null;
+    const endTime = values.endTime ? dayjs(Number(values.endTime)) : null;
+    const day = startTime && endTime ? endTime.diff(startTime, 'day') : 0;
+
     const data = await getApprovalDetailApi({
       processDefinitionId: processDefinitionId.value,
-      // TODO 小北：可以支持 processDefinitionKey 查询
       activityId: BpmNodeIdEnum.START_USER_NODE_ID,
-      processVariablesStr: JSON.stringify({
-        day: dayjs(formData.value?.startTime).diff(
-          dayjs(formData.value?.endTime),
-          'day',
-        ),
-      }), // 解决 GET 无法传递对象的问题，后端 String 再转 JSON
+      processVariablesStr: JSON.stringify({ day }), // 解决 GET 无法传递对象的问题，后端 String 再转 JSON
     });
+    if (requestId !== predictionRequestId) {
+      return;
+    }
     if (!data) {
       message.error('查询不到审批详情信息！');
       return;
@@ -152,7 +169,9 @@ async function getApprovalDetail() {
       }
     }
   } finally {
-    processTimeLineLoading.value = false;
+    if (requestId === predictionRequestId) {
+      processTimeLineLoading.value = false;
+    }
   }
 }
 
@@ -177,7 +196,7 @@ async function getDetail(id: number) {
       reason: data.reason,
       startTime: data.startTime,
       endTime: data.endTime,
-    } as BpmOALeaveApi.Leave;
+    };
     await formApi.setValues({
       type: data.type,
       reason: data.reason,
@@ -188,26 +207,6 @@ async function getDetail(id: number) {
     formLoading.value = false;
   }
 }
-
-/** 审批相关：预测流程节点会因为输入的参数值而产生新的预测结果值，所以需重新预测一次, formData.value可改成实际业务中的特定字段 */
-watch(
-  formData.value as object,
-  (newValue, oldValue) => {
-    if (!oldValue) {
-      return;
-    }
-    if (newValue && Object.keys(newValue).length > 0) {
-      // 记录之前的节点审批人
-      tempStartUserSelectAssignees.value = startUserSelectAssignees.value;
-      startUserSelectAssignees.value = {};
-      // 加载最新的审批详情,主要用于节点预测
-      getApprovalDetail();
-    }
-  },
-  {
-    immediate: true,
-  },
-);
 
 /** 初始化 */
 onMounted(async () => {
@@ -220,7 +219,6 @@ onMounted(async () => {
     return;
   }
   processDefinitionId.value = processDefinitionDetail.id;
-  startUserSelectTasks.value = processDefinitionDetail.startUserSelectTasks;
 
   // 如果是重新发起，则加载请假数据
   if (query.id) {

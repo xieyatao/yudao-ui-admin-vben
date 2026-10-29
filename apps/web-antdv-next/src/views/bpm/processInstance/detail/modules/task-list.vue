@@ -87,7 +87,7 @@ function useGridColumns(): VxeTableGridOptions['columns'] {
       slots: {
         default: 'slot-evidence',
       },
-      minWidth: 220,
+      minWidth: 260,
     },
     {
       field: 'durationInMillis',

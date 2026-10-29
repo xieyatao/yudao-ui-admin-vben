@@ -10,8 +10,7 @@ import { BpmProcessInstanceStatus } from '@vben/constants';
 import { message, TextArea } from 'antdv-next';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getLeavePage } from '#/api/bpm/oa/leave';
-import { cancelProcessInstanceByStartUser } from '#/api/bpm/processInstance';
+import { cancelLeave, getLeavePage } from '#/api/bpm/oa/leave';
 import { $t } from '#/locales';
 import { router } from '#/router';
 
@@ -26,9 +25,6 @@ function handleRefresh() {
 function handleCreate() {
   router.push({
     name: 'OALeaveCreate',
-    query: {
-      formType: 'create',
-    },
   });
 }
 
@@ -69,7 +65,7 @@ function handleCancel(row: BpmOALeaveApi.Leave) {
         duration: 0,
       });
       try {
-        await cancelProcessInstanceByStartUser(row.id, scope.value);
+        await cancelLeave(row.id, scope.value);
         message.success('取消成功');
         handleRefresh();
       } catch {
