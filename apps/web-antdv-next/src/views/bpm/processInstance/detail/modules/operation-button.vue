@@ -77,14 +77,26 @@ const emit = defineEmits(['success']);
 const [SignatureModal, signatureModalApi] = useVbenModal({
   connectedComponent: Signature,
   destroyOnClose: true,
+  zIndex: 3000,
 });
+
+const [ApproveModal, approveModalApi] = useVbenModal({
+  title: '审批通过',
+  class: 'w-[760px]',
+  closable: true,
+  closeOnClickModal: false,
+  closeOnPressEscape: false,
+  destroyOnClose: true,
+  onCancel: () => closePopover('approve', approveFormRef.value),
+  onConfirm: () => handleAudit(true, approveFormRef.value),
+});
+const approveModalOpen = approveModalApi.useStore((state) => state.isOpen);
 
 const router = useRouter();
 const userStore = useUserStore();
 const userId = userStore.userInfo?.id;
 const formLoading = ref(false); // 表单加载中
 const popOverVisible: any = ref({
-  approve: false,
   reject: false,
   transfer: false,
   delegate: false,
@@ -297,10 +309,15 @@ async function openPopover(type: string) {
       return;
     }
   }
+  if (type !== 'approve' && approveModalOpen.value) {
+    approveModalApi.close();
+  }
   Object.keys(popOverVisible.value).forEach((item) => {
     if (popOverVisible.value[item]) popOverVisible.value[item] = item === type;
   });
   if (type === 'approve') {
+    // 先打开 Modal，保证其中的 form-create 完成挂载，再等待 fApi 就绪
+    approveModalApi.open();
     // 当前任务有节点表单时，等 form-create 的 fApi 就绪后再计算下一个节点；
     // 没有节点表单时，approveFormFApi 永远不会被赋值，跳过等待
     if (runningTask.value?.formId > 0) {
@@ -320,9 +337,11 @@ function closePopover(type: string, formRef: any | FormInstance) {
     formRef.resetFields();
   }
   if (type === 'approve') {
+    approveModalApi.close();
     approveReasonForm.reason = '';
     approveReasonForm.attachments = [];
     approveReasonForm.signPicUrl = '';
+    approveFormFApi.value = {};
   } else if (type === 'reject') {
     rejectReasonForm.reason = '';
     rejectReasonForm.attachments = [];
@@ -460,7 +479,8 @@ async function handleAudit(pass: boolean, formRef: FormInstance | undefined) {
       approveReasonForm.reason = '';
       approveReasonForm.attachments = [];
       approveReasonForm.signPicUrl = '';
-      popOverVisible.value.approve = false;
+      approveModalApi.close();
+      approveFormFApi.value = {};
       nextAssigneesActivityNode.value = [];
       // 清理 Timeline 组件中的自定义审批人数据
       if (nextAssigneesTimelineRef.value) {
@@ -769,7 +789,7 @@ function loadTodoTask(task: any) {
     // 为表单添加 onChange 事件，当表单值变化时，重新计算下一个节点的信息；网关分支可能依赖表单字段
     tempApproveForm.option.onChange = () => {
       // 弹窗打开时，才重新计算下一个节点的信息
-      if (!popOverVisible.value.approve) {
+      if (!approveModalOpen.value) {
         return;
       }
       // useDebounceFn 会把前一次返回的 Promise reject 掉，需 catch 吞掉 'cancelled'
@@ -853,137 +873,25 @@ function handleImagePreviewOpenChange(open: boolean) {
   imagePreviewOpen.value = open;
 }
 
-/** 处理弹窗可见性 */
-function handlePopoverVisible(visible: boolean) {
-  if (!visible) {
-    // 拦截关闭事件
-    popOverVisible.value.approve = true;
-  }
-}
-
 defineExpose({ loadTodoTask });
 </script>
 <template>
   <div class="flex items-center">
     <!-- 【通过】按钮 -->
-    <!-- z-index 设置为300 避免覆盖签名弹窗 -->
     <Space size="middle">
-      <Popover
-        v-model:open="popOverVisible.approve"
-        placement="top"
-        :styles="{ root: { minWidth: '400px', zIndex: 300 } }"
-        :trigger="['click']"
-        @open-change="handlePopoverVisible"
+      <Button
+        ghost
+        type="primary"
         v-if="
           runningTask &&
           isHandleTaskStatus() &&
           isShowButton(BpmTaskOperationButtonTypeEnum.APPROVE)
         "
+        @click="openPopover('approve')"
       >
-        <Button ghost type="primary" @click="openPopover('approve')">
-          <IconifyIcon icon="lucide:check" />
-          {{ getButtonDisplayName(BpmTaskOperationButtonTypeEnum.APPROVE) }}
-        </Button>
-        <template #content>
-          <!-- 办理表单 -->
-          <div class="flex flex-1 flex-col px-5 pt-5" v-loading="formLoading">
-            <Form
-              layout="vertical"
-              class="mb-auto"
-              ref="approveFormRef"
-              :model="approveReasonForm"
-              :rules="approveReasonRule"
-              label-width="100px"
-            >
-              <Card v-if="runningTask?.formId > 0" class="!-mt-2.5 mb-3.5">
-                <template #title>
-                  <span class="el-icon-picture-outline">
-                    填写表单【{{ runningTask?.formName }}】
-                  </span>
-                </template>
-                <FormCreate
-                  v-model:value="approveForm.value"
-                  v-model:api="approveFormFApi"
-                  :option="approveForm.option"
-                  :rule="approveForm.rule"
-                />
-              </Card>
-
-              <FormItem
-                label="下一个节点的审批人"
-                name="nextAssignees"
-                v-if="nextAssigneesActivityNode.length > 0"
-              >
-                <div class="ml-2.5">
-                  <ProcessInstanceTimeline
-                    ref="nextAssigneesTimelineRef"
-                    embedded
-                    :activity-nodes="nextAssigneesActivityNode"
-                    :show-status-icon="false"
-                    :enable-approve-user-select="true"
-                    @select-user-confirm="selectNextAssigneesConfirm"
-                  />
-                </div>
-              </FormItem>
-              <FormItem
-                v-if="runningTask.signEnable"
-                label="签名"
-                name="signPicUrl"
-                ref="approveSignFormRef"
-              >
-                <div class="flex items-center gap-2">
-                  <Button @click="openSignatureModal" type="primary">
-                    {{ approveReasonForm.signPicUrl ? '重新签名' : '点击签名' }}
-                  </Button>
-                  <Image
-                    class="!h-10 !w-40 object-contain"
-                    v-if="approveReasonForm.signPicUrl"
-                    :src="approveReasonForm.signPicUrl"
-                  />
-                </div>
-              </FormItem>
-              <FormItem :label="`${nodeTypeName}意见`" name="reason">
-                <TextArea
-                  v-model:value="approveReasonForm.reason"
-                  :placeholder="`请输入${nodeTypeName}意见`"
-                  :rows="4"
-                />
-              </FormItem>
-              <FormItem label="上传附件/图片" name="attachments">
-                <FileUpload
-                  v-model:value="approveReasonForm.attachments"
-                  :accept="APPROVAL_ATTACHMENT_FILE_TYPES"
-                  :max-number="10"
-                  :max-size="APPROVAL_ATTACHMENT_FILE_SIZE"
-                  :multiple="true"
-                  :show-description="true"
-                  :show-download-icon="false"
-                  help-text="支持多文件/图片上传"
-                  @preview="handleFilePreview"
-                />
-              </FormItem>
-              <FormItem>
-                <Space>
-                  <Button
-                    :disabled="formLoading"
-                    type="primary"
-                    @click="handleAudit(true, approveFormRef)"
-                  >
-                    {{
-                      getButtonDisplayName(
-                        BpmTaskOperationButtonTypeEnum.APPROVE,
-                      )
-                    }}
-                  </Button>
-                  <Button @click="closePopover('approve', approveFormRef)">
-                    取消
-                  </Button>
-                </Space>
-              </FormItem>
-            </Form>
-          </div>
-        </template>
-      </Popover>
+        <IconifyIcon icon="lucide:check" />
+        {{ getButtonDisplayName(BpmTaskOperationButtonTypeEnum.APPROVE) }}
+      </Button>
 
       <!-- 【拒绝】按钮 -->
       <Popover
@@ -1584,6 +1492,92 @@ defineExpose({ loadTodoTask });
       </Button>
     </Space>
   </div>
+
+  <!-- 审批通过弹窗 -->
+  <ApproveModal v-if="approveModalOpen" :confirm-loading="formLoading">
+    <!-- 办理表单 -->
+    <div class="flex flex-1 flex-col" v-loading="formLoading">
+      <Form
+        layout="vertical"
+        class="mb-auto"
+        ref="approveFormRef"
+        :model="approveReasonForm"
+        :rules="approveReasonRule"
+        label-width="100px"
+      >
+        <Card v-if="runningTask?.formId > 0" class="!-mt-2.5 mb-3.5">
+          <template #title>
+            <span class="el-icon-picture-outline">
+              填写表单【{{ runningTask?.formName }}】
+            </span>
+          </template>
+          <FormCreate
+            v-model:value="approveForm.value"
+            v-model:api="approveFormFApi"
+            :option="approveForm.option"
+            :rule="approveForm.rule"
+          />
+        </Card>
+
+        <FormItem
+          label="下一个节点的审批人"
+          name="nextAssignees"
+          v-if="nextAssigneesActivityNode.length > 0"
+        >
+          <div class="ml-2.5">
+            <ProcessInstanceTimeline
+              ref="nextAssigneesTimelineRef"
+              embedded
+              :activity-nodes="nextAssigneesActivityNode"
+              :show-status-icon="false"
+              :enable-approve-user-select="true"
+              @select-user-confirm="selectNextAssigneesConfirm"
+            />
+          </div>
+        </FormItem>
+        <FormItem
+          v-if="runningTask.signEnable"
+          label="签名"
+          name="signPicUrl"
+          ref="approveSignFormRef"
+        >
+          <div class="flex items-center gap-2">
+            <Button @click="openSignatureModal" type="primary">
+              {{ approveReasonForm.signPicUrl ? '重新签名' : '点击签名' }}
+            </Button>
+            <Image
+              class="!h-10 !w-40 object-contain"
+              v-if="approveReasonForm.signPicUrl"
+              :src="approveReasonForm.signPicUrl"
+            />
+          </div>
+        </FormItem>
+        <FormItem :label="`${nodeTypeName}意见`" name="reason">
+          <TextArea
+            v-model:value="approveReasonForm.reason"
+            :placeholder="`请输入${nodeTypeName}意见`"
+            :rows="4"
+          />
+        </FormItem>
+        <FormItem label="上传附件/图片" name="attachments">
+          <FileUpload
+            v-model:value="approveReasonForm.attachments"
+            :accept="APPROVAL_ATTACHMENT_FILE_TYPES"
+            :max-number="10"
+            :max-size="APPROVAL_ATTACHMENT_FILE_SIZE"
+            :multiple="true"
+            :show-description="true"
+            :show-download-icon="false"
+            help-text="支持多文件/图片上传"
+            @preview="handleFilePreview"
+          />
+        </FormItem>
+      </Form>
+    </div>
+    <template #confirmText>
+      {{ getButtonDisplayName(BpmTaskOperationButtonTypeEnum.APPROVE) }}
+    </template>
+  </ApproveModal>
 
   <!-- 签名弹窗 -->
   <SignatureModal @success="handleSignFinish" />
